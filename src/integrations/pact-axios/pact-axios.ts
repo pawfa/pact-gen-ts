@@ -1,6 +1,7 @@
 import * as tsMorph from 'ts-morph';
 import * as ts from 'typescript';
 import {exampleRepresentationOfType} from '../../core/create-pact-example-object';
+import {InteractionCreator} from '../../core/interaction-creator';
 
 export class PactAxios {
     public axiosCallExpression: tsMorph.CallExpression;
@@ -56,7 +57,7 @@ export class PactAxios {
 
     getPath() {
         const firstAxiosCallArgument = this.axiosCallExpression.getArguments()[0];
-        return this.generatePathFromNode(firstAxiosCallArgument);
+        return this.getAxiosBaseURL() + this.generatePathFromNode(firstAxiosCallArgument);
     }
 
     getRequestBodyType() {
@@ -78,6 +79,33 @@ export class PactAxios {
         if (secondAxiosCallArgument) {
             return this.getAxiosConfigProperty('data');
         }
+    }
+
+    private getAxiosBaseURL() {
+        const axiosInstanceIdentifier = this.axiosCallExpression.getChildAtIndex(0).getChildrenOfKind(ts.SyntaxKind.Identifier)[0];
+        let baseUrlPrefix = '';
+
+        /** Check if axios was configured using Axios.create() with baseURL set */
+        if (axiosInstanceIdentifier && axiosInstanceIdentifier.getImplementations().length > 0) {
+            const axiosInstanceName = axiosInstanceIdentifier.getText();
+
+            /** Handle basic case with object literal passed (example): Axios.create({baseURL: "/api"}) */
+            const baseUrl = InteractionCreator.getProject()
+                .getSourceFile(axiosInstanceIdentifier.getImplementations()[0]?.getSourceFile().getFilePath())
+                ?.getVariableDeclaration(axiosInstanceName)
+                ?.getDescendantsOfKind(ts.SyntaxKind.ObjectLiteralExpression)[0]
+                ?.getProperty('baseURL');
+
+            if (baseUrl && baseUrl.isKind(ts.SyntaxKind.PropertyAssignment)) {
+                /** Take the value of baseURL property */
+                const prefix = baseUrl.getInitializer()?.getText();
+                if (prefix) {
+                    baseUrlPrefix = prefix.replace(/["']/g, '');
+                }
+            }
+        }
+
+        return baseUrlPrefix;
     }
 
     /** Find within config object in axios call type of property */

@@ -57,6 +57,8 @@ function readInteractionsFromFiles(filesWithApiFunctions: string[], provider: Pr
     const typescriptProject = new tsMorph.Project();
     typescriptProject.addSourceFilesAtPaths(filesWithApiFunctions);
     const files = glob.sync(filesWithApiFunctions.length > 1 ? `{${filesWithApiFunctions.join(',')}}` : filesWithApiFunctions[0]);
+    InteractionCreator.setProject(typescriptProject);
+
     for (const file of files) {
         const sourceFile = typescriptProject.getSourceFileOrThrow(file);
 

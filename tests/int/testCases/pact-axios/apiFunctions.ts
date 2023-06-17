@@ -1,8 +1,27 @@
 import axios, {AxiosInstance} from 'axios';
-import {axiosInstance} from './axios-instance';
+import {axiosInstance, axiosInstanceWithBaseURL} from './axios-instance';
 
 export const applicationId = '1';
 export const clientNo = '1';
+
+/**
+ * @pact
+ * @pact-axios
+ */
+export const getPactAxiosBaseUrlConfigFunction = async () => {
+    const {data} = await axiosInstanceWithBaseURL.get<string>('/clients');
+    return data;
+};
+
+/**
+ * @pact
+ * @pact-axios
+ * @pact-path /api/clients/1/posts
+ */
+export const getPactAxiosJsDocPathOverrideFunction = async (clientNumber: number) => {
+    const {data} = await axiosInstanceWithBaseURL.get<string>(`/clients/${clientNumber}/posts`);
+    return data;
+};
 
 /**
  * @pact

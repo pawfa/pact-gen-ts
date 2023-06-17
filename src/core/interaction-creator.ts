@@ -32,10 +32,22 @@ export interface Interaction {
 }
 
 export class InteractionCreator {
+    private static tsProject: tsMorph.Project;
     constructor(private readonly sourceFile: tsMorph.SourceFile, private readonly provider: ProviderConfig) {}
 
     public static getAllInteractionsInFile(sourceFile: tsMorph.SourceFile, provider: ProviderConfig) {
         return new InteractionCreator(sourceFile, provider).findAllInteractions();
+    }
+
+    public static setProject(tsProject: tsMorph.Project) {
+        InteractionCreator.tsProject = tsProject;
+    }
+
+    public static getProject() {
+        if (!InteractionCreator.tsProject) {
+            throw Error('tsMorph.Project was not set in InteractionCreator');
+        }
+        return InteractionCreator.tsProject;
     }
 
     public findAllInteractions() {
